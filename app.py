@@ -43,5 +43,8 @@ def create_app(database='feedback_db'):
 
     @app.route('/secret')
     def show_secret():
-        return render_template('/secret.html')
+        if 'username' in session:
+            return render_template('/secret.html')
+        else:
+            return redirect('/')
     return app

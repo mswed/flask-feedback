@@ -47,4 +47,12 @@ def create_app(database='feedback_db'):
             return render_template('/secret.html')
         else:
             return redirect('/')
+
+    @app.route('/logout')
+    def logout():
+        session.pop('username')
+
+        return redirect('/')
+
     return app
+

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, flash, session
 from models import connect_db, db, User
-from forms import RegisterForm
+from forms import RegisterForm, LoginForm
 
 
 def create_app(database='feedback_db'):
@@ -27,6 +27,19 @@ def create_app(database='feedback_db'):
                 return redirect('/secret')
 
         return render_template('/register.html', form=form)
+
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        form = LoginForm()
+        if form.validate_on_submit():
+            u = User.query.get_or_404(form.username.data)
+            if u:
+                print('USER is', u)
+                u.login_user(form.password.data)
+                session['username'] = u.username
+                return redirect('/secret')
+
+        return render_template('/login.html', form=form)
 
     @app.route('/secret')
     def show_secret():

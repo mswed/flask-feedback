@@ -24,7 +24,7 @@ def create_app(database='feedback_db'):
                                    form.last_name.data)
             if u:
                 session['username'] = u
-                return redirect('/secret')
+                return redirect(f'/secret/{u}')
 
         return render_template('/register.html', form=form)
 
@@ -37,14 +37,16 @@ def create_app(database='feedback_db'):
                 print('USER is', u)
                 u.login_user(form.password.data)
                 session['username'] = u.username
-                return redirect('/secret')
+                return redirect(f'/secret/{u.username}')
 
         return render_template('/login.html', form=form)
 
-    @app.route('/secret')
-    def show_secret():
+    @app.route('/secret/<string:username>')
+    def show_secret(username):
         if 'username' in session:
-            return render_template('/secret.html')
+            u = User.query.get_or_404(username)
+
+            return render_template('/secret.html', user=u)
         else:
             return redirect('/')
 

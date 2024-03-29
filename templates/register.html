@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title%}Register{% endblock%}
+{% block content %}
+<h1>Welcome to Silly Feedbacks!</h1>
+<p>Please create an account</p>
+<div class="container">
+
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {% for field in form if field.widget.input_type != 'hidden' %}
+        <p>
+            {{field.label}}
+            {{field(class_='form-control')}}
+        </p>
+        {% endfor %}
+        <button class="btn btn-success">Register</button>
+    </form>
+</div>
+
+{% endblock%}

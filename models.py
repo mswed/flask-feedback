@@ -4,6 +4,7 @@ from flask_bcrypt import Bcrypt
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
+
 def connect_db(app):
     """
     
@@ -13,6 +14,24 @@ def connect_db(app):
     
     db.app = app
     db.init_app(app)
+
+
+class Feedback(db.Model):
+    """
+        Feedback model
+        @param id:  primary key
+        @param title: text, (100 characters)
+        @param content: text
+        @param username: foreign key
+        """
+
+    __tablename__ = 'feedback'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, db.ForeignKey('users.username'))
+    posts = db.relationship('User', backref='posts')
 
 
 class User(db.Model):
@@ -52,9 +71,7 @@ class User(db.Model):
         else:
             return False
 
-    def login_user(self, password):
-        print(self.password)
-        print(password)
+    def authenticate(self, password):
         valid = bcrypt.check_password_hash(self.password, password)
         if valid:
             return self.username

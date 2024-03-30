@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, flash, session
-from models import connect_db, db, User
-from forms import RegisterForm, LoginForm
+from models import connect_db, db, User, Feedback
+from forms import RegisterForm, LoginForm, FeedbackForm
+from utils import authorize
 
 
 def create_app(database='feedback_db'):
@@ -24,7 +25,7 @@ def create_app(database='feedback_db'):
                                    form.last_name.data)
             if u:
                 session['username'] = u
-                return redirect(f'/secret/{u}')
+                return redirect(f'/users/{u}')
 
         return render_template('/register.html', form=form)
 
@@ -32,23 +33,23 @@ def create_app(database='feedback_db'):
     def login():
         form = LoginForm()
         if form.validate_on_submit():
+            print('Logging in')
             u = User.query.get_or_404(form.username.data)
             if u:
-                print('USER is', u)
-                u.login_user(form.password.data)
+                u.authenticate(form.password.data)
                 session['username'] = u.username
-                return redirect(f'/secret/{u.username}')
+                print('Redirecting to', f'/users/{u.username}')
+                return redirect(f'/users/{u.username}')
 
         return render_template('/login.html', form=form)
 
-    @app.route('/secret/<string:username>')
+    @app.route('/users/<string:username>')
     def show_secret(username):
-        if 'username' in session:
+        if authorize(username):
             u = User.query.get_or_404(username)
-
             return render_template('/secret.html', user=u)
-        else:
-            return redirect('/')
+
+        return redirect('/')
 
     @app.route('/logout')
     def logout():
@@ -56,5 +57,51 @@ def create_app(database='feedback_db'):
 
         return redirect('/')
 
+    @app.route('/users/<string:username>/feedback/add', methods=['GET', 'POST'])
+    def add_feedback(username):
+        if authorize(username):
+            form = FeedbackForm()
+            if form.validate_on_submit():
+                f = Feedback()
+                f.title = form.title.data
+                f.content = form.content.data
+                f.username = username
+                db.session.add(f)
+                db.session.commit()
+                return redirect(f'/users/{username}')
+
+            return render_template('/add_feedback.html', form=form)
+
+        return redirect('/')
+
+    @app.route('/feedback/<int:pid>/update', methods=['GET', 'POST'])
+    def update_feedback(pid):
+        feedback = Feedback.query.get_or_404(pid)
+        username = feedback.username
+        if authorize(username):
+            form = FeedbackForm()
+
+            if form.validate_on_submit():
+                feedback.title = form.title.data
+                feedback.content = form.content.data
+                db.session.add(feedback)
+                db.session.commit()
+                return redirect(f'/users/{username}')
+            else:
+                form.title.data = feedback.title
+                form.content.data = feedback.content
+                return render_template('/edit_feedback.html', form=form)
+
+        return redirect('/')
+
+    @app.route('/feedback/<int:pid>/delete', methods=['POST'])
+    def delete_feedback(pid):
+        feedback = Feedback.query.get_or_404(pid)
+        username = feedback.username
+        if authorize(username):
+            Feedback.query.filter_by(id=feedback.id).delete()
+            db.session.commit()
+
+        return redirect(f'/users/{username}')
     return app
 

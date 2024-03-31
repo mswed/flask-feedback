@@ -12,10 +12,16 @@ def create_app(database='feedback_db'):
 
     @app.route('/')
     def home():
+        if 'username' in session:
+            return redirect(f'/users/{session["username"]}')
+
         return redirect('/register')
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        if 'username' in session:
+            return redirect(f'/users/{session["username"]}')
+
         form = RegisterForm()
         if form.validate_on_submit():
             u = User.register_user(form.username.data,
@@ -31,9 +37,11 @@ def create_app(database='feedback_db'):
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        if 'username' in session:
+            return redirect(f'/users/{session["username"]}')
+        
         form = LoginForm()
         if form.validate_on_submit():
-            print('Logging in')
             u = User.query.get_or_404(form.username.data)
             if u:
                 u.authenticate(form.password.data)
@@ -43,13 +51,23 @@ def create_app(database='feedback_db'):
 
         return render_template('/login.html', form=form)
 
+    @app.route('/users/<string:username>/delete', methods=['POST'])
+    def delete_user(username):
+        if authorize(username):
+            u = User.query.filter_by(username=username).first()
+            db.session.delete(u)
+            db.session.commit()
+            session.pop('username')
+
+        return redirect('/')
+
     @app.route('/users/<string:username>')
     def show_secret(username):
         if authorize(username):
             u = User.query.get_or_404(username)
             return render_template('/secret.html', user=u)
 
-        return redirect('/')
+        return redirect('/401')
 
     @app.route('/logout')
     def logout():
@@ -103,5 +121,10 @@ def create_app(database='feedback_db'):
             db.session.commit()
 
         return redirect(f'/users/{username}')
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('/404.html')
+
     return app
 

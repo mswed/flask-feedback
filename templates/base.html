@@ -10,7 +10,8 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="#">Silly Feedbacks</a>
-    <button aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
+    <button aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation"
+            class="navbar-toggler"
             data-target="#navbarTogglerDemo02" data-toggle="collapse" type="button">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -20,15 +21,21 @@
             <li class="nav-item active">
                 <a class="nav-link" href="#">Home</a>
             </li>
+            {% if 'username' not in session %}
             <li class="nav-item">
                 <a class="nav-link" href="/register">Register</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/login">Login</a>
             </li>
+
+            {% endif %}
+
+            {% if 'username' in session %}
             <li class="nav-item">
                 <a class="nav-link" href="/logout">Logout</a>
             </li>
+            {% endif %}
 
         </ul>
     </div>
